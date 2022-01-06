@@ -1,6 +1,7 @@
 experiments/
 data/mini/
 data/cub/
+data/fish/
 __pycache__/
 *.py[cod]
 *.ipynb_checkpoints*
