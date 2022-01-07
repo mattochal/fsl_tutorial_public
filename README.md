@@ -11,6 +11,8 @@ The goals of this tutorial are as follows:
 The tasks are marked in files with a "TODO:" note:
  1. Study this repository and understand how things fit together
     * Ask questions if you are not sure!
+    * Unzip the fish data set in to the [./data/](./data/) folder
+    * You can visualise the content of the dataset using the [./visualiser.ipynb](./visualiser.ipynb)
  2. Fix Task Sampler:
     * Go to: [./src/tasks/fsl.py](./src/tasks/fsl.py)
  3. Fix Prototypical Networks:
@@ -50,6 +52,9 @@ conda install -y pytorch torchvision -c pytorch
 conda install -y -c conda-forge tqdm
 conda install -y -c anaconda pillow scikit-learn
 conda install -y -c anaconda pytest
+
+conda install -y -c conda-forge ipykernel
+conda install -y -c conda-forge matplotlib
 ```
 
 ### Structure

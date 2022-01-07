@@ -13,20 +13,37 @@ class ProtoNet(ModelTemplate):
         super().__init__(backbone, args, device)
         
     def setup_model(self):
+        """
+            Runs once, imidiately after object initialization
+            This method sets up the loss function and any additional backbone settings
+        """
         super().setup_model()
         self.loss_fn = nn.CrossEntropyLoss().to(self.device)
         self.prototypes = dict()
         
     def net_reset(self):
+        """
+            Resets any parameters between tasks
+        """
         self.prototypes = dict()
         
     def net_train(self, support_set):
+        """
+            Inner-loop training.
+            This is where the task adaptation / fine-tuning of the support set happens.
+            In the case of ProtoNet, there is no strict 'inner-loop' optimization process.
+            Instead, the learning process happens by calculating the prototypes.
+        """
         supports_x, supports_y = support_set
         supports_h = self.backbone(supports_x)
         new_proto_h, new_proto_y = self.calc_prototypes(supports_h, supports_y)
         self.update_prototypes(new_proto_h, new_proto_y)
 
     def net_eval(self, target_set, ptracker):
+        """
+            Inner-loop evaluation.
+            This is where evaluation on the query/target set happens
+        """
         if len(target_set[0]) == 0: return torch.tensor(0.).to(self.device)
         targets_x, targets_y = target_set
         targets_h = self.backbone(targets_x)
@@ -36,8 +53,10 @@ class ProtoNet(ModelTemplate):
         targets_y = targets_y
         loss = self.loss_fn(scores, targets_y)
         
+        # Get the prediction label
         _, pred_y = torch.max(scores, 1)
         
+        # Store performances for performance tracking
         ptracker.add_task_performance(
             pred_y.detach().cpu().numpy(),
             targets_y.detach().cpu().numpy(),
@@ -45,13 +64,24 @@ class ProtoNet(ModelTemplate):
         return loss
         
     def calc_prototypes(self, h, y):
-        """
-        Computes prototypes
+        """ 
+            Compute prototypes
+        
+        Inputs:
+            h : feature vectors of the support set
+            y : the corresponding labels 
         """
         unique_labels = torch.unique(y)
         proto_h = []
         for label in unique_labels:
-            proto_h.append(h[y==label].mean(0))
+            """
+                TODO: Calculate prototypes
+            """
+            ##### a possible solution #####
+            prototype = h[y==label].mean(0)
+            proto_h.append(prototype)
+            ##############################
+        
         return proto_h, unique_labels
     
     def update_prototypes(self, proto_h, proto_y):
@@ -80,7 +110,7 @@ class ProtoNet(ModelTemplate):
         return proto_h, y
     
     
-def euclidean_dist( x, y):
+def euclidean_dist(x, y):
     """
     Distance calculation between two sets of vectors x (n x d) and y (m x d)
     """

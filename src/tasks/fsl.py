@@ -27,7 +27,8 @@ class FSLTask(TaskTemplate):
     
     def __init__(self, dataset, args, class_seed, sample_seed):
         """
-        Few Shot Learning Task sampler for creating a single episode for a few-shot learning task
+            Few Shot Learning Task sampler.
+            Creates a batch of few-shot learning tasks.
         """
         super().__init__(dataset, args, class_seed, sample_seed)
         self.num_classes = args.num_classes
@@ -45,16 +46,18 @@ class FSLTask(TaskTemplate):
             
             rng = np.random.RandomState(self.class_seed)
             total_classes = self.dataset.get_num_classes()
+
+            """
+                TODO: Sample self.num_classes (N-way) random classes from all available classes
+            """
+            #### a possible solution ####
             selected_classes = rng.permutation(total_classes)[:self.num_classes]
-            
+            #############################
+
             supports_x = []
             supports_y = []
             targets_x = []
             targets_y = []
-            
-            # -------------------------------------
-            # TODO: Implement task sampler here
-            # -------------------------------------
 
             for episode_lbl, actual_lbl in enumerate(selected_classes):
                 
@@ -63,15 +66,11 @@ class FSLTask(TaskTemplate):
                 img_idxs = self.dataset.get_image_idxs_per_class(actual_lbl)
                 img_idxs = rng.permutation(img_idxs)
                 
-                supports_x.extend( img_idxs[:self.num_supports]  ) 
-                targets_x.extend(  img_idxs[self.num_supports: self.num_supports + self.num_targets] ) 
+                supports_x.extend( img_idxs[:self.num_supports] )
+                targets_x.extend( img_idxs[self.num_supports: self.num_supports + self.num_targets] )
                 
                 supports_y.extend([episode_lbl] * self.num_supports)
                 targets_y.extend([episode_lbl] * self.num_targets)
-            
-            # -------------------------------------
-            # End of code
-            # -------------------------------------
 
             support_seeds = rng.randint(0, 999999999, len(supports_y))
             target_seeds = rng.randint(0, 999999999, len(targets_y))

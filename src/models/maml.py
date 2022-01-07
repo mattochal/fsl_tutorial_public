@@ -14,7 +14,7 @@ class Maml(ModelTemplate):
     @staticmethod
     def get_parser(parser=None):
         """
-        returns a parser for the given model. Can also return a subparser
+            Returns a argparse.ArgumentParser() for MAML 
         """
         if parser is None: parser = argparse.ArgumentParser()
         parser = ModelTemplate.get_parser(parser)
@@ -40,6 +40,9 @@ class Maml(ModelTemplate):
         assert self.output_dim.train == self.output_dim.test, 'maml training output dim must mimic the testing scenario'
         
     def setup_model(self):
+        """
+            Set up linear classifier, outer-loop optimizer and lr scheduler
+        """
         self.loss_fn = nn.CrossEntropyLoss()
         self.classifier = self.setup_classifier(self.output_dim.train)
         all_params = list(self.backbone.parameters()) + list(self.classifier.parameters())
@@ -50,11 +53,17 @@ class Maml(ModelTemplate):
         self.optimizer.step()
         
     def setup_classifier(self, output_dim):
+        """
+            Setup last fully connected layer
+        """
         classifier = Linear_fw(self.backbone.final_feat_dim, output_dim).to(self.device)
         classifier.bias.data.fill_(0)
         return classifier
         
-    def meta_train(self, task, ptracker): # single iter of meta training (outer) loop 
+    def meta_train(self, task, ptracker):
+        """
+            Single iteration of meta training (outer) loop 
+        """
         self.mode='train'
         self.train()
         self.net_reset()
@@ -69,6 +78,7 @@ class Maml(ModelTemplate):
         loss = torch.stack(total_losses).sum(0)
         self.batch_losses.append(loss)
         
+        # Optimize algorithms on batches of tasks to stabilize learning
         if self.batch_count % self.batch_size == 0:
             self.optimizer.zero_grad()
             loss = torch.stack(self.batch_losses).sum(0)
@@ -76,49 +86,87 @@ class Maml(ModelTemplate):
             self.optimizer.step()
             self.batch_losses = []
         
-    def meta_eval(self, task, ptracker):  # single iter of evaluation of task 
+    def meta_eval(self, task, ptracker):
+        """
+            Single iteration of the outer-loop evaluation 
+        """ 
         self.net_reset()
         for support_set, target_set in task:
             self.net_train(support_set)
             self.net_eval(target_set, ptracker)
      
     def net_reset(self):
+        """
+            Inner-loop reset.
+            Clears the fast weights of the model.
+
+            Fast-weights are those weights used for task adaptation.
+            The fast-weights should not overwrite meta-learned weights. 
+        """
         self.fast_parameters = self.get_inner_loop_params()
         for weight in self.parameters():  # reset fast parameters
             weight.fast = None
     
-    def net_train(self, support_set): # inner loop       
+    def net_train(self, support_set):
+        """
+            Inner-loop optimization.
+        """ 
         self.zero_grad()
-        
+
         support_x, support_y = support_set
-        
-        for n_step in range(self.num_steps):
+        for _ in range(self.num_steps):
+
+            # get an updated features, prediction scores, and loss
             support_h  = self.backbone.forward(support_x)
             scores  = self.classifier.forward(support_h)
             support_set_loss = self.loss_fn(scores, support_y)
             
+            # build full graph support gradient of gradient
             grad = torch.autograd.grad(
                 support_set_loss, 
                 self.fast_parameters, 
-                create_graph=True) # build full graph support gradient of gradient
+                create_graph=True)
             
+            # Do not calculate gradient of gradient if using first-order approximation
             if self.approx:
-                grad = [ g.detach() for g in grad ] #do not calculate gradient of gradient if using first order approximation
+                grad = [ g.detach() for g in grad ] 
             
             self.fast_parameters = []
             for k, weight in enumerate(self.parameters()):
+                """
+                    TODO: Implement a simple SGD update step
+                    HINT: Use predifined inner loop lr and the calculated gradients
+                """
+                ##### a possible solution #####
+                step = - self.inner_loop_lr * grad[k] 
+                ###############################
+
                 if weight.fast is None:
-                    weight.fast = weight - self.inner_loop_lr * grad[k] # create weight.fast 
+                    # create weight.fast 
+                    weight.fast = weight + step
                 else:
-                    weight.fast = weight.fast - self.inner_loop_lr * grad[k] # update weight.fast
-                self.fast_parameters.append(weight.fast) # gradients are based on newest weights, but the graph will retain the link to old weight.fasts
+                    # update weight.fast
+                    weight.fast = weight.fast + step
+                
+                # Gradients are based on newest weights, but the graph (built by torch.autograd.grad)
+                #   will retain a link to the original weights and perform second-order optimization 
+                #   on meta-weights if the self.approx flag is enabled
+                self.fast_parameters.append(weight.fast) 
                 
     def net_eval(self, target_set, ptracker):
+        """
+            Inner-loop evalution on the query/target set after task adaptation.
+        """
         if len(target_set[0]) == 0: return torch.tensor(0.).to(self.device)
         
         targets_x, targets_y = target_set
+        """
+            TODO: Implement forward propagation through the model to get final probability scores
+        """
+        #### a possible solution ####
         targets_h  = self.backbone.forward(targets_x)
-        scores  = self.classifier.forward(targets_h)
+        scores = self.classifier.forward(targets_h)
+        #############################
         
         loss = self.loss_fn(scores, targets_y)
         
@@ -132,5 +180,8 @@ class Maml(ModelTemplate):
         return loss
     
     def get_inner_loop_params(self):
+        """
+            Get the inner loop parameters of the model
+        """
         return list(self.backbone.parameters()) + list(self.classifier.parameters())
             
