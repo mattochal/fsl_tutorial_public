@@ -4,15 +4,24 @@ This repository contains code for my FSL tutotial.
 Before jumping into the tutorial, make sure that all the conda environments are 
 
 The goals of this tutorial are as follows:
- * To implement task sampler for FSL tasks to gain an intuition of FSL problem setup. The relevant 
- * To implement a couple of FSL methods to gained an intuition of meta-learning works
+ * Understanding how to train FSL algorithms
+ * Understanding how baseline FSL algorithms work
+ * Experience training and evaluating FSL algorithms
 
-The task 
- Prototypical Networks (Snell et al., 2017)
- * To implement Model-Agnostic Meta-Learning (MAML, Finn et al., 2017)
- * To implement Proto-MAML (Triantafillou et al., 2017)
-
-
+The tasks are marked in files with a "TODO:" note:
+ 1. Study this repository and understand how things fit together
+    * Ask questions if you are not sure!
+ 2. Fix Task Sampler:
+    * Go to: [./src/tasks/fsl.py](./src/tasks/fsl.py)
+ 3. Fix Prototypical Networks:
+    * Original Paper: [(Snell et al., 2017)](https://arxiv.org/pdf/1703.05175.pdf)
+    * Code file: [./src/models/protonet.py (line 66)](./src/models/protonet.py)
+ 4. Fix MAML:
+    * Original Paper: [(Finn et al., 2017)](https://arxiv.org/pdf/1703.03400.pdf)
+    * Code file: [./src/models/maml.py (lines 137 and 164)](./src/models/maml.py)
+ 5. Fix Proto-MAML
+    * Original Paper: [(Triantafillou et al., 2017)](https://arxiv.org/pdf/1903.03096.pdf)
+    * Code file: [./src/models/protomaml.py (lines 30 and 54)](./src/models/protomaml.py)
 
 ## Running Repository
 ### Dependecies
@@ -40,7 +49,6 @@ conda activate fsl_tutorial
 conda install -y pytorch torchvision -c pytorch
 conda install -y -c conda-forge tqdm
 conda install -y -c anaconda pillow scikit-learn
-conda install -y -c intel scikit-learn
 conda install -y -c anaconda pytest
 ```
 
@@ -86,8 +94,3 @@ To run a specific experiment setting from a configuration file:
 ```
 python src/main.py --args_file <CONFIGPATH> --gpu <GPU>
 ```
-____
-
-### Contributions
-This repository is based the following GITHUB repository:
- * https://github.com/mattochal/imbalanced_fsl_public
