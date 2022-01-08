@@ -87,9 +87,12 @@ cub-cache-val.pkl
 
 ## Fish4Knowledge 
 
-To run FISH experiments, `./data/cub/` should contain the following files:
+To run FISH experiments, `./data/fish/` should contain the following files:
 ```
 fish-cache-train.pkl
 fish-cache-test.pkl
 fish-cache-val.pkl
 ```
+
+You can download the dataset from here: [https://bit.ly/3qT61B8](https://bit.ly/3qT61B8)
+
