@@ -100,12 +100,6 @@ To run a specific experiment setting from a configuration file:
 python src/main.py --args_file <CONFIGPATH> --gpu <GPU>
 ```
 
-# Answers and Solutions
-
-Answers are located in the `answers` branch
-```
-git checkout answers
-```
 
 
 # Attribution
